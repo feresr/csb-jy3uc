@@ -84,7 +84,7 @@ function IPhone({ open, texture, ...props }) {
     );
   });
 
-  const { nodes, materials } = useGLTF("/PRO.gltf");
+  const { nodes, materials } = useGLTF("PRO.gltf");
   return (
     <group ref={group} {...props} dispose={null}>
       <group rotation={[-Math.PI, 0.0, -Math.PI]} scale={0.04}>
