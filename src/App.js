@@ -8,8 +8,8 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import { Environment, useGLTF, ContactShadows } from "@react-three/drei";
+import { Canvas, useFrame, useLoader } from "@react-three/fiber";
+import { Environment, useGLTF, ContactShadows, Box } from "@react-three/drei";
 import { useSpring } from "@react-spring/core";
 import { a as three } from "@react-spring/three";
 import { a as web } from "@react-spring/web";
@@ -31,35 +31,22 @@ function MyDropzone({ onLoad, ...props }) {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
   return (
-    <div {...getRootProps()} >
+    <div {...getRootProps()}>
       <input {...getInputProps()} />
       {isDragActive ? (
         <p>Drop the files here ...</p>
       ) : (
-        <p>Drag 'n' drop some files here, or click to select files</p>
+        <p>
+          Click <b>here</b> to change the content on the phone screen (tap the
+          phone to flip it)
+        </p>
       )}
     </div>
   );
 }
+
 function IPhone({ open, texture, ...props }) {
   const group = useRef();
-  useEffect(() => {
-    if (texture) {
-      const newT = new TextureLoader().load(
-        texture,
-        undefined,
-        (texture) => {
-          console.log("success");
-        },
-        (error) => {
-          console.log("error");
-          console.log(error);
-        }
-      );
-      newT.flipY = false;
-      materials.Display.map = newT;
-    }
-  }, [texture]);
   useFrame((state) => {
     const t = state.clock.getElapsedTime();
     group.current.rotation.x = THREE.MathUtils.lerp(
@@ -69,7 +56,7 @@ function IPhone({ open, texture, ...props }) {
     );
     group.current.rotation.z = THREE.MathUtils.lerp(
       group.current.rotation.z,
-      open? -0.5 + Math.sin(t / 4) / 4 : +0.5 + Math.sin(t / 4) / 4,
+      open ? -0.5 + Math.sin(t / 4) / 4 : +0.5 + Math.sin(t / 4) / 4,
       0.1
     );
     group.current.position.y = THREE.MathUtils.lerp(
@@ -84,7 +71,13 @@ function IPhone({ open, texture, ...props }) {
     );
   });
 
-  const { nodes, materials } = useGLTF("PRO.gltf");
+  const { nodes, materials } = useGLTF("/csb-jy3uc/PRO.gltf");
+  if (texture) {
+    const newT = useLoader(TextureLoader, texture);
+    newT.flipY = false;
+    materials.Display.map = newT;
+  }
+
   return (
     <group ref={group} {...props} dispose={null}>
       <group rotation={[-Math.PI, 0.0, -Math.PI]} scale={0.04}>
@@ -120,27 +113,39 @@ function IPhone({ open, texture, ...props }) {
 }
 
 export default function App() {
-  const { title, background } = useControls({
-    title: "Hello!",
-    background: "#f0f0f0",
+  const { hello, goodbye } = useControls({
+    hello: "#f0f0f0",
+    goodbye: "#ffbebe",
   });
 
   // This flag controls open state, alternates between true & false
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const [texture, setTexture] = useState("");
   // We turn this into a spring animation that interpolates between 0 and 1
   const props = useSpring({ open: Number(open) });
   return (
-    <web.main style={{ background: background }}>
-      <h1>{title}</h1>
-      <MyDropzone onLoad={(i) => { setTexture(i); }} />
-      <Canvas camera={{ fov: 32, position: [13, 3, 6] }}>
+    <web.main style={{ background: props.open.to([1, 0], [hello, goodbye]) }}>
+      <h1>{open ? "Hello!" : "Good bye."}</h1>
+
+      <MyDropzone
+        onLoad={(i) => {
+          setTexture(i);
+        }}
+      />
+      <Canvas gl={{ antialias: false }} dpr={[1, 2]} camera={{ fov: 32, position: [13, 3, 6] }}>
         <three.pointLight
           position={[10, 10, 10]}
           intensity={1.5}
-          color={props.open.to([0, 1], ["#f0f0f0", "#f0f0f0"])}
+          color={props.open.to([1, 0], [hello, goodbye])}
         />
-        <Suspense fallback={null}>
+        <three.pointLight
+          position={[5, 5, -10]}
+          intensity={0.6}
+          color={props.open.to([1, 0], [hello, goodbye])}
+        />
+        <Suspense fallback={
+          <Box/>
+        }>
           <ContactShadows
             rotation-x={Math.PI / 2}
             position={[0, -2.6, 0]}

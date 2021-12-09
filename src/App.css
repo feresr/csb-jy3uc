@@ -1,14 +1,13 @@
 @import url('https://rsms.me/inter/inter.css');
 
 * {
-  box-sizing: border-box;
-
 }
 
 html,
 body,
 main,
 #root {
+  position: absolute;
   width: 100%;
   height: 100%;
   margin: 0;
@@ -20,6 +19,12 @@ body {
   color: black;
   background: #f0f0f0;
   align-items: stretch;
+}
+
+p {
+  position: relative;
+  margin: 10px;
+  padding: 10px;
 }
 
 h1 {
